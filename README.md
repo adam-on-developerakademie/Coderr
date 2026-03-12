@@ -1,188 +1,119 @@
-# Coderr Backend
+# Coderr Backend (Coderr_TEST07)
 
-A Django-based backend project for the Coderr application.
+Production-ready backend copy of the Coderr Django/DRF project, prepared without test files and documented in English.
 
-## 📋 Project Overview
+## Overview
 
-This is a Django project configured with Django REST Framework and CORS support. It provides a foundation for building REST API endpoints.
+- Framework: Django 6.0.2
+- API: Django REST Framework 3.16.1
+- Auth: TokenAuthentication + SessionAuthentication
+- Filters: django-filter + DRF ordering/search where applicable
+- Database: SQLite (default development setup)
 
-## 🛠️ Technology Stack
 
-- **Framework**: Django 6.0.2
-- **API Framework**: Django REST Framework 3.16.1
-- **Database**: SQLite (development)
-- **CORS**: django-cors-headers 4.9.0
-- **Environment Management**: python-dotenv 1.2.1
-- **Python Version**: Python 3.x (recommended: 3.8+)
+## Quick Start
 
-## 📦 Dependencies
-
-```txt
-asgiref==3.11.1
-Django==6.0.2
-django-cors-headers==4.9.0
-djangorestframework==3.16.1
-python-dotenv==1.2.1
-sqlparse==0.5.5
-tzdata==2025.3
-```
-
-## 🚀 Installation and Setup
-
-### Prerequisites
-
-- Python 3.8 or higher
-- pip (Python Package Manager)
-
-### 1. Clone the repository
-
-```bash
-git clone <repository-url>
-cd Coderr
-```
-
-### 2. Create and activate virtual environment
-
-```bash
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure environment variables
-
-Sensitive data is managed in a `.env` file. **Create a .env file based on .env.example:**
-
-```bash
-# Copy .env.example to .env
-cp .env.example .env
-
-# Windows:
-copy .env.example .env
-```
-
-**Then edit the .env file and adjust the values:**
-- Generate a new `SECRET_KEY` (see Step 5)
-- Configure `ALLOWED_HOSTS` for your domain
-- Set `DEBUG=False` for production
-
+1. Create virtual environment:
+	- Windows: `python -m venv .venv && .venv\Scripts\activate`
+2. Install dependencies:
+	- `pip install -r requirements.txt`
+3. Create environment file:
+	- `copy .env.example .env`
+	- Generate a new `SECRET_KEY`
 **⚠️ Security Notes:**
 - **NEVER** commit the `.env` file to Git (already included in .gitignore)
 - **Production:** Generate a new SECRET_KEY for production
 - **Production:** Set `DEBUG=False`
 - **Production:** Configure `ALLOWED_HOSTS` according to your domain
 - **Privacy:** Use strong, unique passwords
-
-### Step 5: Generate New SECRET_KEY
-
 **⚠️ IMPORTANT:** Always generate a new SECRET_KEY for your installation:
 
 ```bash
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
+-  Copy the generated key and replace `your-secret-key-here` in your `.env` file.
 
-Copy the generated key and replace `your-secret-key-here` in your `.env` file.
+4. Apply migrations:
+	- `python manage.py migrate`
+5. Start server:
+	- `python manage.py runserver`
 
-### 6. Run database migrations
+Server URL: `http://127.0.0.1:8000/`
 
-```bash
-python manage.py makemigrations
-python manage.py migrate
-```
+## Environment Variables
 
-### 7. Create superuser (optional)
+Defined in `.env.example`:
 
-```bash
-python manage.py createsuperuser
-```
+- `SECRET_KEY`
+- `DEBUG`
+- `ALLOWED_HOSTS`
+- `DATABASE_NAME`
+- `DATABASE_ENGINE`
+- `LANGUAGE_CODE`
+- `TIME_ZONE`
 
-### 8. Start development server
+Important: never commit `.env` and never expose production secrets.
 
-```bash
-python manage.py runserver
-```
+## Endpoint Contract (Frontend-Relevant)
 
-The server runs by default on `http://localhost:8000/`
+### Authentication
+- `POST /api/registration/` → object response (token + user info)
+- `POST /api/login/` → object response (token + user info)
 
-## 🗂️ Project Structure
+### Profile
+- `GET /api/profile/{pk}/` → object
+- `PATCH /api/profile/{pk}/` → object
+- `GET /api/profiles/business/` → array
+- `GET /api/profiles/customer/` → array
 
-```
-Coderr/
-├── core/                  # Main Django configuration
-│   ├── asgi.py            # ASGI configuration
-│   ├── settings.py        # Django settings
-│   ├── urls.py            # URL routing
-│   └── wsgi.py            # WSGI configuration
-├── .env                   # Environment variables (not in Git)
-├── .env.example           # Environment variables example
-├── .gitignore            # Git ignore file
-├── db.sqlite3            # SQLite database (development)
-├── manage.py             # Django management commands
-├── requirements.txt      # Python dependencies
-└── README.md             # Project documentation
-```
+### Offers
+- `GET /api/offers/` → paginated object (`count`, `next`, `previous`, `results`)
+- `POST /api/offers/` → object with full `details`
+- `GET /api/offers/{id}/` → object
+- `PATCH /api/offers/{id}/` → object
+- `DELETE /api/offers/{id}/` → 204 no content
+- `GET /api/offerdetails/{id}/` → object
 
-## 🔧 Available Management Commands
+### Orders
+- `GET /api/orders/` → array (not paginated)
+- `POST /api/orders/` → object
+- `PATCH /api/orders/{id}/` → object
+- `DELETE /api/orders/{id}/` → 204 no content
+- `GET /api/order-count/{business_user_id}/` → object
+- `GET /api/completed-order-count/{business_user_id}/` → object
 
-```bash
-# Start server
-python manage.py runserver
+### Reviews
+- `GET /api/reviews/` → array (not paginated)
+- `POST /api/reviews/` → object
+- `PATCH /api/reviews/{id}/` → object
+- `DELETE /api/reviews/{id}/` → 204 no content
 
-# Create migrations
-python manage.py makemigrations
+### Base Information
+- `GET /api/base-info/` → object (`review_count`, `average_rating`, `business_profile_count`, `offer_count`)
 
-# Apply migrations
-python manage.py migrate
+## Permissions Summary
 
-# Create superuser
-python manage.py createsuperuser
+- Public: registration, login, base-info, offers list
+- Auth required: profile, profile lists, order/review endpoints, offer details
+- Business-only: create offers, update order status
+- Customer-only: create orders, create reviews
+- Staff-only: delete orders
+- Owner-only: update/delete own offers, update/delete own reviews, edit own profile
 
-# Start Django shell
-python manage.py shell
+## Project Structure
 
-# Run tests
-python manage.py test
+- `core/` central project config (`settings.py`, `urls.py`)
+- `auth_app/` registration and login API
+- `profile_app/` profile retrieval/update + profile lists
+- `offers_app/` offer and offer detail endpoints
+- `orders_app/` order lifecycle and counters
+- `reviews_app/` review lifecycle
+- `baseinfo_app/` platform aggregate statistics
 
-# Collect static files
-python manage.py collectstatic
-```
+Each app keeps API logic in its own `api/` package (`serializers.py`, `views.py`, `urls.py`).
 
-## 🌐 Available Endpoints
+## Notes for Submission/Deployment
 
-### Admin Panel
-- `GET /admin/` - Django Admin Interface
-
-*Additional API endpoints will be documented here as they are implemented.*
-
-## 🔐 Configuration Notes
-
-The project is configured with:
-
-- **CORS Headers**: Enabled for cross-origin requests
-- **Django REST Framework**: Ready for API development
-- **Environment Variables**: Loaded via python-dotenv
-- **SQLite Database**: Default development database
-
-Current settings include basic Django apps plus `corsheaders` for CORS support.
-
-## 🚀 Production Considerations
-
-Before deploying to production:
-
-1. Set `DEBUG = False` in settings.py
-2. Configure `ALLOWED_HOSTS`
-3. Generate a strong `SECRET_KEY`
-4. Configure production database
-5. Set up static file serving
-6. Enable HTTPS
+- Keep `DEBUG=False` in production.
+- Configure `ALLOWED_HOSTS` for deployment domain(s).
+- Use HTTPS and secure secret handling in production.
