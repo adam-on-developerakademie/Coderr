@@ -1,6 +1,6 @@
-# Coderr Backend (Coderr_TEST07)
+# Coderr Backend
 
-Production-ready backend copy of the Coderr Django/DRF project, prepared without test files and documented in English.
+Production-ready backend of the Coderr Django/DRF project.
 
 ## Overview
 
