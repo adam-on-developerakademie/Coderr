@@ -3,6 +3,8 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.response import Response
 
 from profile_app.models import Profile
+
+from reviews_app.api.filters import ReviewFilter
 from reviews_app.api.serializers import ReviewSerializer
 from reviews_app.models import Review
 
@@ -24,22 +26,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
     pagination_class = None
     permission_classes = [permissions.IsAuthenticated, IsReviewerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ["business_user", "reviewer"]
+    filterset_class = ReviewFilter
     ordering_fields = ["updated_at", "rating"]
     ordering = ["-updated_at"]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-
-        business_user_id = self.request.query_params.get("business_user_id")
-        reviewer_id = self.request.query_params.get("reviewer_id")
-
-        if business_user_id:
-            queryset = queryset.filter(business_user_id=business_user_id)
-        if reviewer_id:
-            queryset = queryset.filter(reviewer_id=reviewer_id)
-
-        return queryset
 
     def create(self, request, *args, **kwargs):
         try:

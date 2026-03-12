@@ -1,8 +1,12 @@
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
+
 from profile_app.models import Profile
+
 from offers_app.models import Offer, OfferDetail
+from offers_app.api.filters import OfferFilter
 from offers_app.api.serializers import (
     OfferListSerializer, OfferDetailViewSerializer, OfferCreateUpdateSerializer,
     OfferDetailSerializer, OfferResponseWithFullDetailsSerializer
@@ -43,9 +47,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.all()
     permission_classes = [IsBusinessUserPermission, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    
-    # Filter and ordering configuration.
-    filterset_fields = ['user']  # creator_id -> user
+    filterset_class = OfferFilter
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'created_at']
     ordering = ['-updated_at']
@@ -62,47 +64,18 @@ class OfferViewSet(viewsets.ModelViewSet):
             return OfferDetailViewSerializer
     
     def get_queryset(self):
-        """Build queryset with supported query parameter filters."""
+        """Build queryset with optional min_price ordering annotation."""
         queryset = Offer.objects.select_related('user').prefetch_related('details')
-        
-        # Custom filters
-        creator_id = self.request.query_params.get('creator_id')
-        if creator_id:
-            try:
-                creator_id = int(creator_id)
-                queryset = queryset.filter(user_id=creator_id)
-            except (ValueError, TypeError):
-                # Return empty queryset for invalid creator_id.
-                queryset = queryset.none()
-        
-        min_price = self.request.query_params.get('min_price')
-        if min_price:
-            try:
-                min_price = float(min_price)
-                # Filter by details with price >= min_price
-                queryset = queryset.filter(details__price__gte=min_price).distinct()
-            except (ValueError, TypeError):
-                queryset = queryset.none()
-        
-        max_delivery_time = self.request.query_params.get('max_delivery_time')
-        if max_delivery_time:
-            try:
-                max_delivery_time = int(max_delivery_time)
-                # Filter by details with delivery_time <= max_delivery_time
-                queryset = queryset.filter(details__delivery_time_in_days__lte=max_delivery_time).distinct()
-            except (ValueError, TypeError):
-                queryset = queryset.none()
-        
+
         # Custom ordering by computed min price.
         ordering = self.request.query_params.get('ordering')
         if ordering == 'min_price':
-            # Annotate and order by minimum detail price.
             from django.db.models import Min
             queryset = queryset.annotate(min_detail_price=Min('details__price')).order_by('min_detail_price')
         elif ordering == '-min_price':
             from django.db.models import Min
             queryset = queryset.annotate(min_detail_price=Min('details__price')).order_by('-min_detail_price')
-        
+
         return queryset
     
     def list(self, request, *args, **kwargs):
