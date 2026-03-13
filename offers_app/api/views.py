@@ -45,12 +45,25 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 class OfferViewSet(viewsets.ModelViewSet):
     """ViewSet for offer CRUD operations."""
     queryset = Offer.objects.all()
-    permission_classes = [IsBusinessUserPermission, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = OfferFilter
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'created_at']
     ordering = ['-updated_at']
+
+    def get_permissions(self):
+        """Apply endpoint-specific permissions according to the documented contract."""
+        if self.action == 'list':
+            return [permissions.AllowAny()]
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticated()]
+        return [IsBusinessUserPermission(), IsOwnerOrReadOnly()]
+
+    def perform_authentication(self, request):
+        """Skip authentication for public list endpoint to avoid 401 on invalid auth headers."""
+        if self.action == 'list':
+            return
+        super().perform_authentication(request)
     
     def get_serializer_class(self):
         """
