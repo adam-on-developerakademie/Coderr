@@ -45,6 +45,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         business_user_id = request.data.get("business_user")
         if business_user_id and Review.objects.filter(
             business_user_id=business_user_id,
@@ -55,7 +58,5 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
         serializer.save(reviewer=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
