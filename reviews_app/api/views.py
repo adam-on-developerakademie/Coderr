@@ -42,7 +42,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if profile.type != "customer":
             return Response(
                 {"detail": "Only authenticated users with a customer profile can create reviews."},
-                status=status.HTTP_401_UNAUTHORIZED,
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = self.get_serializer(data=request.data)
@@ -55,7 +55,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         ).exists():
             return Response(
                 {"detail": "Only one review per business profile is allowed."},
-                status=status.HTTP_403_FORBIDDEN,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer.save(reviewer=request.user)
