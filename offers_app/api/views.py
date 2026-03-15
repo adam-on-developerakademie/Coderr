@@ -3,6 +3,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.response import Response
 
+from core.pagination import StandardPagination
+
 from profile_app.models import Profile
 
 from offers_app.models import Offer, OfferDetail
@@ -45,6 +47,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 class OfferViewSet(viewsets.ModelViewSet):
     """ViewSet for offer CRUD operations."""
     queryset = Offer.objects.all()
+    pagination_class = StandardPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = OfferFilter
     search_fields = ['title', 'description']

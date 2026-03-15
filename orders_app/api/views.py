@@ -127,7 +127,14 @@ class OrderCountView(APIView):
                 {"detail": "Business user not found."},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
+        from profile_app.models import Profile
+        if not Profile.objects.filter(user=business_user, type='business').exists():
+            return Response(
+                {"detail": "Business user not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         count = Order.objects.filter(
             business_user=business_user,
             status='in_progress'
@@ -149,7 +156,14 @@ class CompletedOrderCountView(APIView):
                 {"detail": "Business user not found."},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
+        from profile_app.models import Profile
+        if not Profile.objects.filter(user=business_user, type='business').exists():
+            return Response(
+                {"detail": "Business user not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         count = Order.objects.filter(
             business_user=business_user,
             status='completed'

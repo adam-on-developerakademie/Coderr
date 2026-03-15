@@ -1,7 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from django.db.models import Avg
+
+from core.pagination import StandardPagination
 
 from reviews_app.models import Review
 from offers_app.models import Offer
@@ -9,14 +10,10 @@ from profile_app.models import Profile
 from baseinfo_app.api.serializers import BaseInfoSerializer
 
 
-class BaseInfoPagination(PageNumberPagination):
-    page_size = 6
-
-
 class BaseInfoViewSet(viewsets.ModelViewSet):
     """Return platform-level aggregate statistics for GET /api/base-info/."""
     serializer_class = BaseInfoSerializer
-    pagination_class = BaseInfoPagination
+    pagination_class = StandardPagination
     permission_classes = []
     authentication_classes = []
     # ModelViewSet requires a queryset, although this endpoint is aggregate-only.
