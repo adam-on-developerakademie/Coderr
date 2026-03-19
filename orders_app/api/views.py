@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.db.models import Q
 from orders_app.models import Order
@@ -53,7 +54,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return [IsCustomerUser()]
         elif self.action in ['partial_update', 'update']:
-            return [IsBusinessUser()]
+            return [IsAuthenticated()]
         elif self.action == 'destroy':
             return [IsAdminUser()]
         else:
@@ -97,6 +98,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         # Load target instance (may raise 404).
         instance = self.get_object()
+
+        # Only the business user assigned to the order can update status.
+        if request.user != instance.business_user:
+            raise PermissionDenied("You do not have permission to perform this action.")
         
         # Apply validated status update.
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -104,6 +109,24 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = serializer.save()
         
         # Return full order payload.
+        output_serializer = OrderSerializer(order)
+        return Response(output_serializer.data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        """Update order status via PUT."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = self.get_object()
+
+        # Only the business user assigned to the order can update status.
+        if request.user != instance.business_user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+
         output_serializer = OrderSerializer(order)
         return Response(output_serializer.data, status=status.HTTP_200_OK)
     
