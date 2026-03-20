@@ -49,12 +49,13 @@ class OrderCreateSerializer(serializers.Serializer):
         return value
     
     def create(self, validated_data):
-        """Create a new order from the selected OfferDetail."""
+        """Create a new order from the selected OfferDetail.
+        # Raise 404 when OfferDetail does not exist.
+        """
         from rest_framework.exceptions import NotFound
         
         offer_detail_id = validated_data['offer_detail_id']
         
-        # Raise 404 when OfferDetail does not exist.
         try:
             offer_detail = OfferDetail.objects.get(id=offer_detail_id)
         except OfferDetail.DoesNotExist:
@@ -86,8 +87,10 @@ class OrderStatusUpdateSerializer(serializers.ModelSerializer):
         fields = ['status']
     
     def validate(self, data):
-        """Validate status update payload."""
+        """Validate status update payload.
         # Ensure that only status can be updated.
+        # Validate status value against allowed states.
+        """
         allowed_fields = {'status'}
         request_fields = set(self.initial_data.keys())
         
@@ -97,7 +100,6 @@ class OrderStatusUpdateSerializer(serializers.ModelSerializer):
                 f"Invalid fields: {', '.join(extra_fields)}. Only 'status' can be updated."
             )
         
-        # Validate status value against allowed states.
         if 'status' in data:
             valid_statuses = ['in_progress', 'completed', 'cancelled']
             if data['status'] not in valid_statuses:

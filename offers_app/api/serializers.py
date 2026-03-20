@@ -100,9 +100,11 @@ class OfferCreateUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
     def __init__(self, *args, **kwargs):
+        """Initialize serializer and adapt nested detail requirements for PATCH.
+        # For PATCH, nested detail fields are optional except offer_type.
+        """
         super().__init__(*args, **kwargs)
 
-        # For PATCH, nested detail fields are optional except offer_type.
         if self.partial and 'details' in self.fields:
             detail_serializer = self.fields['details'].child
             for field_name, field in detail_serializer.fields.items():
@@ -139,8 +141,7 @@ class OfferCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"Offer must include {', '.join(required_types)} details."
                 )
-        
-        # Check for duplicates
+
         if len(set(offer_types)) != len(offer_types):
             raise serializers.ValidationError("Each offer_type may appear only once.")
         
@@ -159,14 +160,17 @@ class OfferCreateUpdateSerializer(serializers.ModelSerializer):
         return offer
     
     def update(self, instance, validated_data):
-        details_data = validated_data.pop('details', None)
-        
+        """Update offer and detail objects.
         # Update offer fields.
+        # Update detail objects if provided.
+        # For full updates, all three package types must be present.
+        """
+        details_data = validated_data.pop('details', None)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-        
-        # Update detail objects if provided.
+
         if details_data is not None:
             if self.partial:
                 existing_details = {
@@ -187,7 +191,6 @@ class OfferCreateUpdateSerializer(serializers.ModelSerializer):
                         setattr(detail_instance, attr, value)
                     detail_instance.save()
             else:
-                # For full updates, all three package types must be present.
                 offer_types = [detail.get('offer_type') for detail in details_data]
                 required_types = ['basic', 'standard', 'premium']
 

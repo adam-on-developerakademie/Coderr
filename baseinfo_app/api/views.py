@@ -6,19 +6,21 @@ from core.pagination import StandardPagination
 
 from reviews_app.models import Review
 from offers_app.models import Offer
-from profile_app.models import Profile
 from baseinfo_app.api.serializers import BaseInfoSerializer
+from baseinfo_app.api.permissions import PublicBaseInfoPermission
+from baseinfo_app.api.filters import get_business_profile_count
 
 
 class BaseInfoViewSet(viewsets.ModelViewSet):
-    """Return platform-level aggregate statistics for GET /api/base-info/."""
+    """Return platform-level aggregate statistics for GET /api/base-info/.
+    # ModelViewSet requires a queryset, although this endpoint is aggregate-only.
+    # Read-only endpoint.
+    """
     serializer_class = BaseInfoSerializer
     pagination_class = StandardPagination
-    permission_classes = []
+    permission_classes = [PublicBaseInfoPermission]
     authentication_classes = []
-    # ModelViewSet requires a queryset, although this endpoint is aggregate-only.
     queryset = Offer.objects.none()
-    # Read-only endpoint.
     http_method_names = ['get', 'head', 'options']
 
     def list(self, request, *args, **kwargs):
@@ -28,7 +30,7 @@ class BaseInfoViewSet(viewsets.ModelViewSet):
             avg_result = Review.objects.aggregate(avg=Avg('rating'))['avg']
             average_rating = round(float(avg_result), 1) if avg_result is not None else 0.0
 
-            business_profile_count = Profile.objects.filter(type='business').count()
+            business_profile_count = get_business_profile_count()
 
             offer_count = Offer.objects.count()
 

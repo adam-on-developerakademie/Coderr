@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.contrib.auth.models import User
+from auth_app.api.permissions import AllowAnyAuthPermission
 from .serializers import RegistrationSerializer, UserSerializer, LoginSerializer
 
 
@@ -11,6 +12,7 @@ class AuthViewSet(ModelViewSet):
     
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [AllowAnyAuthPermission]
     
     def get_serializer_class(self):
         """Select serializer class based on the active action."""
@@ -22,13 +24,14 @@ class AuthViewSet(ModelViewSet):
     
     @action(detail=False, methods=['post'], url_path='registration')
     def register(self, request):
-        """Handle user registration via POST /api/registration/."""
+        """Handle user registration via POST /api/registration/.
+        # Create user, profile, and authentication token.
+        """
         
         serializer = RegistrationSerializer(data=request.data)
         
         if serializer.is_valid():
             try:
-                # Create user, profile, and authentication token.
                 result = serializer.save()
                 user = result['user']
                 token = result['token']
@@ -52,18 +55,19 @@ class AuthViewSet(ModelViewSet):
     
     @action(detail=False, methods=['post'], url_path='login')
     def login(self, request):
-        """Handle user login via POST /api/login/."""
+        """Handle user login via POST /api/login/.
+        # Authenticate user and return existing/new token.
+        # Build response payload according to endpoint contract.
+        """
         
         serializer = LoginSerializer(data=request.data)
         
         if serializer.is_valid():
             try:
-                # Authenticate user and return existing/new token.
                 result = serializer.save()
                 user = result['user']
                 token = result['token']
 
-                # Build response payload according to endpoint contract.
                 response_data = {
                     'token': token.key,
                     'username': user.username,

@@ -1,29 +1,15 @@
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound
 from django.contrib.auth.models import User
 from profile_app.models import Profile
+from profile_app.api.filters import get_business_profiles_queryset, get_customer_profiles_queryset
+from profile_app.api.permissions import IsProfileOwnerOrReadOnly
 from .serializers import ProfileSerializer, BusinessProfileSerializer, CustomerProfileSerializer
-
-
-class IsProfileOwnerOrReadOnly(BasePermission):
-    """Allow authenticated access and restrict write access to profile owners."""
-    
-    def has_permission(self, request, view):
-        # Authentication is required for all profile endpoints.
-        return request.user and request.user.is_authenticated
-    
-    def has_object_permission(self, request, view, obj):
-        # Read access for authenticated users.
-        if request.method in ('GET', 'HEAD', 'OPTIONS'):
-            return True
-
-        # Write access only for the owner.
-        return obj.user == request.user
 
 
 class ProfileViewSet(ModelViewSet):
@@ -36,7 +22,9 @@ class ProfileViewSet(ModelViewSet):
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     
     def get_object(self):
-        """Load profile by user ID from URL parameter."""
+        """Load profile by user ID from URL parameter.
+        # Run object-level permission checks.
+        """
         user_id = self.kwargs.get('pk')
         
         try:
@@ -49,7 +37,6 @@ class ProfileViewSet(ModelViewSet):
         except Profile.DoesNotExist:
             raise NotFound("User profile was not found.")
         
-        # Run object-level permission checks.
         self.check_object_permissions(self.request, profile)
         
         return profile
@@ -61,19 +48,21 @@ class ProfileViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def update(self, request, *args, **kwargs):
-        """Update profile fields (including optional image upload)."""
+        """Update profile fields (including optional image upload).
+        # Keep old file reference for safe replacement cleanup.
+        # Save profile updates.
+        # Delete replaced image file when a new one is uploaded.
+        # Provide upload-specific help when image validation fails.
+        """
         profile = self.get_object()
         serializer = self.get_serializer(profile, data=request.data, partial=True)
         
         if serializer.is_valid():
             try:
-                # Keep old file reference for safe replacement cleanup.
                 old_file = profile.file
-                
-                # Save profile updates.
+
                 updated_profile = serializer.save()
-                
-                # Delete replaced image file when a new one is uploaded.
+
                 if old_file and 'file' in request.data and old_file != updated_profile.file:
                     try:
                         old_file.delete(save=False)
@@ -91,7 +80,6 @@ class ProfileViewSet(ModelViewSet):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         else:
-            # Provide upload-specific help when image validation fails.
             errors = serializer.errors
             if 'file' in errors:
                 errors['file_help'] = (
@@ -101,19 +89,6 @@ class ProfileViewSet(ModelViewSet):
                 )
             
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def check_object_permissions(self, request, obj):
-        """Override object permission check to return explicit 403 messages."""
-        for permission in self.get_permissions():
-            if not permission.has_object_permission(request, self, obj):
-                # Any access to foreign profiles is forbidden.
-                if obj.user != request.user:
-                    raise PermissionDenied(
-                        f"You are not allowed to access profile data for user {obj.user.username}. "
-                        f"You may only edit your own profile (user ID: {request.user.id})."
-                    )
-                else:
-                    raise PermissionDenied("You are not allowed to access this profile.")
     
     def list(self, request, *args, **kwargs):
         """Disable list endpoint for the profile resource."""
@@ -146,7 +121,7 @@ class BusinessProfileViewSet(ReadOnlyModelViewSet):
     
     def get_queryset(self):
         """Return only business profiles."""
-        return Profile.objects.filter(type='business')
+        return get_business_profiles_queryset()
     
     def list(self, request, *args, **kwargs):
         """Return all business profiles for GET /api/profiles/business/."""
@@ -177,7 +152,7 @@ class CustomerProfileViewSet(ReadOnlyModelViewSet):
     
     def get_queryset(self):
         """Return only customer profiles."""
-        return Profile.objects.filter(type='customer')
+        return get_customer_profiles_queryset()
     
     def list(self, request, *args, **kwargs):
         """Return all customer profiles for GET /api/profiles/customer/."""

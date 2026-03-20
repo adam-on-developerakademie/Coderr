@@ -4,15 +4,15 @@ from profile_app.models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    """Serializer for full profile data including file upload support."""
-    
+    """Serializer for full profile data including file upload support.
     # Additional fields mapped from Django's user model.
+    # ImageField handles profile image uploads.
+    """
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email')
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     type = serializers.ChoiceField(choices=Profile.TYPE_CHOICES, required=False)
     
-    # ImageField handles profile image uploads.
     file = serializers.ImageField(
         required=False, 
         allow_null=True,
@@ -29,33 +29,35 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'username', 'created_at']
     
     def to_representation(self, instance):
-        """Ensure nullable fields are returned as empty strings where required."""
-        data = super().to_representation(instance)
-        
+        """Ensure nullable fields are returned as empty strings where required.
         # Keep these fields as non-null strings in the response contract.
+        # Return empty string when no profile image is set.
+        """
+        data = super().to_representation(instance)
+
         empty_string_fields = ['first_name', 'last_name', 'location', 'tel', 'description', 'working_hours']
         
         for field in empty_string_fields:
             if data.get(field) is None:
                 data[field] = ''
         
-        # Return empty string when no profile image is set.
         if not instance.file:
             data['file'] = ""
         
         return data
     
     def update(self, instance, validated_data):
-        """Update profile data and related user fields."""
+        """Update profile data and related user fields.
         # Extract user-specific fields from payload.
-        user_data = validated_data.pop('user', {})
-        
         # Update user email if included.
+        # Update profile model fields.
+        """
+        user_data = validated_data.pop('user', {})
+
         if 'email' in user_data:
             instance.user.email = user_data['email']
             instance.user.save()
-        
-        # Update profile model fields.
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
@@ -64,12 +66,13 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class BusinessProfileSerializer(serializers.ModelSerializer):
-    """Serializer for business profile list response."""
+    """Serializer for business profile list response.
+    # ImageField for profile image serialization.
+    """
     
     username = serializers.CharField(source='user.username', read_only=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     
-    # ImageField for profile image serialization.
     file = serializers.ImageField(
         required=False, 
         allow_null=True,
@@ -85,17 +88,18 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'username', 'type']
     
     def to_representation(self, instance):
-        """Ensure nullable fields are returned as empty strings where required."""
-        data = super().to_representation(instance)
-        
+        """Ensure nullable fields are returned as empty strings where required.
         # Keep these fields as non-null strings in the response contract.
+        # Return empty string when no profile image is set.
+        """
+        data = super().to_representation(instance)
+
         empty_string_fields = ['first_name', 'last_name', 'location', 'tel', 'description', 'working_hours']
         
         for field in empty_string_fields:
             if data.get(field) is None:
                 data[field] = ''
         
-        # Return empty string when no profile image is set.
         if not instance.file:
             data['file'] = ""
         
@@ -118,10 +122,11 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'username', 'type', 'uploaded_at']
     
     def to_representation(self, instance):
-        """Ensure nullable fields are returned as empty strings where required."""
-        data = super().to_representation(instance)
-        
+        """Ensure nullable fields are returned as empty strings where required.
         # Keep these fields as non-null strings in the response contract.
+        """
+        data = super().to_representation(instance)
+
         empty_string_fields = ['first_name', 'last_name']
         
         for field in empty_string_fields:
