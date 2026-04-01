@@ -19,8 +19,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
+    #path("", admin.site.urls),
     path("admin/", admin.site.urls),
     path("api/", include("baseinfo_app.api.urls")),  # Keep more specific routes first.
     path("api/", include("reviews_app.api.urls")),  # Keep more specific routes first.
@@ -28,7 +30,7 @@ urlpatterns = [
     path("api/", include("offers_app.api.urls")),  # Keep more specific routes first.
     path("api/", include("profile_app.api.urls")),
     path("api/", include("auth_app.api.urls")),    # Keep generic routes last.
-]
+] + staticfiles_urlpatterns()
 
 # Serve media files in development
 if settings.DEBUG:
