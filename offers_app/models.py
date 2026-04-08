@@ -6,13 +6,34 @@ class Offer(models.Model):
     """Offer model representing a business service listing."""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='offers')
     title = models.CharField(max_length=255)
-    image = models.URLField(blank=True, null=True)
+    image = models.ImageField(upload_to='offer_images/', blank=True, null=True)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        """Delete replaced image file to avoid orphaned media files."""
+        old_image = None
+        if self.pk:
+            try:
+                old_image = Offer.objects.get(pk=self.pk).image
+            except Offer.DoesNotExist:
+                old_image = None
+
+        super().save(*args, **kwargs)
+
+        if old_image and old_image != self.image:
+            old_image.delete(save=False)
+
+    def delete(self, *args, **kwargs):
+        """Delete image file when offer is deleted."""
+        image_file = self.image
+        super().delete(*args, **kwargs)
+        if image_file:
+            image_file.delete(save=False)
     
     @property
     def min_price(self):

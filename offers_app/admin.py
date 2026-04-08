@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from offers_app.models import Offer, OfferDetail
 
 
@@ -13,12 +14,12 @@ class OfferAdmin(admin.ModelAdmin):
     list_display = ['title', 'user', 'min_price', 'min_delivery_time', 'created_at']
     list_filter = ['created_at', 'updated_at', 'user']
     search_fields = ['title', 'description', 'user__username']
-    readonly_fields = ['created_at', 'updated_at', 'min_price', 'min_delivery_time']
+    readonly_fields = ['image_preview', 'created_at', 'updated_at', 'min_price', 'min_delivery_time']
     inlines = [OfferDetailInline]
     
     fieldsets = (
         (None, {
-            'fields': ('user', 'title', 'image', 'description')
+            'fields': ('user', 'title', 'image', 'image_preview', 'description')
         }),
         ('Berechnete Felder', {
             'fields': ('min_price', 'min_delivery_time'),
@@ -29,6 +30,13 @@ class OfferAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def image_preview(self, obj):
+        if obj and obj.image:
+            return format_html('<img src="{}" style="max-height: 120px; border-radius: 6px;" />', obj.image.url)
+        return "Kein Bild"
+
+    image_preview.short_description = 'Bildvorschau'
 
 
 @admin.register(OfferDetail)

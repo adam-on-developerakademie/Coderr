@@ -1,6 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import viewsets, permissions, status, filters
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.response import Response
 
 from core.pagination import StandardPagination
@@ -28,6 +29,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'created_at', 'min_price']
     ordering = ['-updated_at']
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_permissions(self):
         """Apply endpoint-specific permissions according to the documented contract."""
