@@ -38,6 +38,17 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 5. Start server:
 	- `python manage.py runserver`
 
+## Default Guest Users
+
+After `python manage.py migrate`, these users are created automatically and always repaired if missing:
+
+- Customer:
+	- `username`: `andrey`
+	- `password`: `Andrey-123456789`
+- Business:
+	- `username`: `kevin`
+	- `password`: `Kevin-123456789`
+
 Server URL: `http://127.0.0.1:8000/`
 
 ## Environment Variables

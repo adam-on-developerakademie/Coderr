@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth.models import User
 from auth_app.api.permissions import AllowAnyAuthPermission
 from .serializers import RegistrationSerializer, UserSerializer, LoginSerializer
@@ -12,6 +13,7 @@ class AuthViewSet(ModelViewSet):
     
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [AllowAnyAuthPermission]
     
     def get_serializer_class(self):
