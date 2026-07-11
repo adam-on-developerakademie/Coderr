@@ -7,11 +7,11 @@ from profile_app.models import Profile
 GUEST_LOGINS = {
     'customer': {
         'username': 'andrey',
-        'password': 'Andrey-123456789',
+        'password': 'asdasd',
     },
     'business': {
         'username': 'kevin',
-        'password': 'Kevin-123456789',
+        'password': 'asdasd24',
     },
 }
 

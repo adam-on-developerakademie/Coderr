@@ -44,10 +44,10 @@ After `python manage.py migrate`, these users are created automatically and alwa
 
 - Customer:
 	- `username`: `andrey`
-	- `password`: `Andrey-123456789`
+	- `password`: `********`
 - Business:
 	- `username`: `kevin`
-	- `password`: `Kevin-123456789`
+	- `password`: `********`
 
 Server URL: `http://127.0.0.1:8000/`
 
